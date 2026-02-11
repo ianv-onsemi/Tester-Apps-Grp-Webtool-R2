@@ -1,0 +1,79 @@
+# Archive Notes - README.md Changes (2602102008)
+
+
+## Original Section: ## 9) Delivery Plan — 4‑Week Pilot
+
+### Week 1 – Foundations
+- Build SharePoint Lists & Libraries  
+- Implement XLS parsers per tester family  
+- Build triage queue  
+- Enable Teams notifications  
+
+### Week 2 – Metrics
+- Implement E10 rollups (Availability, Utilization, MTBF/MTTR)  
+- Add Power BI or list‑view dashboards  
+
+### Week 3 – RCA & Change with DMAIC‑Lite
+- RCA workspace (5‑Whys, Fishbone)  
+- Quick **RCA 1‑Pager** generator  
+- Change entity gains DMAIC‑lite export  
+
+### Week 4 – Infobank & Training
+- Infobank structure (OPLs)  
+- Contextual surfacing in triage  
+- Training for Ops/LMT on E10 states and upload SOPs
+
+---
+Change made: Renamed "4‑Week Pilot" to "4‑Phase Pilot" and changed "Week X" to "Phase X" for consistency.
+
+## Phase 1 Detailed Target Steps (2602102008) (for reference and tracking)
+
+
+### 1.1 SharePoint Lists & Libraries Setup
+- [ ] Create SharePoint site `Sites/TAGWebtool` (if not exists)
+- [ ] Create document libraries:
+  - [ ] `RawLogs/` – configure versioning, 500MB max file size
+  - [ ] `Evidence/` – enable thumbnail view for images
+  - [ ] `Infobank/` – create folder structure: OPLs/, Playbooks/, Templates/
+- [ ] Create SharePoint Lists with columns:
+  - [ ] `Incidents` – ToolID, StartTime, EndTime, E10State, UDT_Minutes, RawLogID (lookup)
+  - [ ] `Problems` – ProblemID, LinkedIncidentID, RCA_Status, Owner, CreatedDate
+  - [ ] `Changes` – ChangeID, LinkedProblemID, DMAIC_Phase, Approval_Status
+  - [ ] `E10_Daily` – Date, ToolID, Availability_Pct, Utilization_Pct, MTBF, MTTR
+  - [ ] `Catalog_Causes` – CauseCode, Category, Description, StandardFix
+
+### 1.2 XLS Parser Implementation
+- [ ] Define parser profiles for each tester family:
+  - [ ] J750 – map Camstar columns: `TesterID`, `StartTime`, `EndTime`, `State`, `ReasonCode`
+  - [ ] FLEX – handle multi-sheet XLS, extract `EquipmentState` tab
+  - [ ] T2000 – parse timestamp format `MM/DD/YYYY HH:MM:SS`
+  - [ ] ETS364 – handle semicolon-delimited variant
+- [ ] Build validation rules:
+  - [ ] Check for overlapping time spans (flag for review)
+  - [ ] Validate E10 state values against allowed set
+  - [ ] Reject files with >20% unmapped rows
+- [ ] Create Power Automate flow: `RawLogs/` upload → trigger parser → write to Lists
+
+### 1.3 Triage Queue Build
+- [ ] Design queue view with filters:
+  - [ ] Sort by UDT_Minutes (descending)
+  - [ ] Group by ToolID
+  - [ ] Filter by date range (default: last 7 days)
+- [ ] Implement ranking algorithm:
+  - [ ] Score = (UDT_Minutes × 0.5) + (RecurrenceCount × 30) + (CriticalityWeight × 20)
+  - [ ] Criticality weights: Hot Lot=5, NPI=4, High Volume=3, Others=1
+- [ ] Create queue UI components:
+  - [ ] Incident card: ToolID, UDT duration, E10 state, quick-view button
+  - [ ] Promote to Problem button (triggers Problem list creation)
+  - [ ] Link Evidence button (connects to Evidence library)
+
+### 1.4 Teams Notifications Enablement
+- [ ] Create Teams channel `TAG Webtool Alerts`
+- [ ] Configure Power Automate notifications:
+  - [ ] New high-UDT incident (>120 min): post to channel with card
+  - [ ] Parser validation failures: DM to uploader + TAG leads
+  - [ ] Problem promotion: notify assigned owner
+  - [ ] Weekly digest: summary of new incidents, open Problems, pending Changes
+- [ ] Set up adaptive card templates:
+  - [ ] Incident alert card: ToolID, UDT, state, direct link to triage
+  - [ ] Action required card: approve/reject buttons for Change requests
